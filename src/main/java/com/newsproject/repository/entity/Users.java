@@ -36,8 +36,7 @@ public class Users {
     @Enumerated(EnumType.STRING)
     private ERole role;
     @Column(name = "status")
-    @Enumerated(EnumType.STRING)
-    private EStatus status;
+    private boolean status;
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "roleId"), inverseJoinColumns = @JoinColumn(name = "userId"))
     private Set<Roles> rolesSet;
