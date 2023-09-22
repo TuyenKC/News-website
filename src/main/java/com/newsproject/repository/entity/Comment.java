@@ -22,8 +22,7 @@ public class Comment {
     @JsonFormat(pattern = "dd/MM/yyyy")
     private Date modifiedAt;
     @Column(name = "status")
-    @Enumerated(EnumType.STRING)
-    private EStatus status;
+    private String status;
     @ManyToOne
     @JoinColumn(name = "created_by", nullable = false)
     private Users users;

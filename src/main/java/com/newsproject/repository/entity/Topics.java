@@ -23,8 +23,7 @@ public class Topics {
     @JsonFormat(pattern =  "dd/MM/yyyy")
     private Date modifiedAt;
     @Column(name = "status")
-    @Enumerated(EnumType.STRING)
-    private EStatus status;
+    private String status;
     @OneToMany(mappedBy = "topics")
     private List<News> newsList;
 

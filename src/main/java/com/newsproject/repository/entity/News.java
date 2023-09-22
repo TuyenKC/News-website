@@ -31,8 +31,7 @@ public class News {
     @Column(name = "view")
     private Integer view;
     @Column(name = "status")
-    @Enumerated(EnumType.STRING)
-    private EStatus status;
+    private String status;
 
     @ManyToOne
     @JoinColumn(name = "topics_id")
