@@ -1,6 +1,7 @@
 package com.newsproject.repository.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -8,6 +9,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "topics")
+@Data
 public class Topics {
     @Id
     @Column(name = "topics_id")

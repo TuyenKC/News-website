@@ -1,12 +1,14 @@
 package com.newsproject.repository.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
 
 import javax.persistence.*;
 import java.util.Date;
 
 @Entity
 @Table(name = "comment")
+@Data
 public class Comment {
     @Id
     @Column(name = "comment_id")

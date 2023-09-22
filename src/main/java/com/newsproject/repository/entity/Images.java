@@ -1,12 +1,14 @@
 package com.newsproject.repository.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
 
 import javax.persistence.*;
 import java.util.Date;
 
 @Entity
 @Table(name = "images")
+@Data
 public class Images {
     @Id
     @Column(name = "images_id")
