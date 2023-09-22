@@ -191,7 +191,7 @@ public class UsersServiceImpl implements UsersService {
         users.setPhone(usersDto.getPhone() != null ? usersDto.getPhone() :  "");
         users.setAddress(usersDto.getAddress() != null ? usersDto.getAddress() :  "");
         users.setCreatedAt(usersDto.getCreatedAt() != null ? usersDto.getCreatedAt() : getDateNow());
-        users.setModifiedAt(usersDto.getModifiedAt() != null ? usersDto.getModifiedAt() : getDateNow());
+        users.setModifiedAt(getDateNow());
         users.setRolesSet(getRolesSetFromString(usersDto.getListRoles()));
         return users;
     }
