@@ -4,6 +4,6 @@ import java.util.UUID;
 
 public class UUIDGenerator {
     public String generateUUID(){
-        return UUID.randomUUID().toString();
+        return UUID.randomUUID().toString().replace("-","");
     }
 }
