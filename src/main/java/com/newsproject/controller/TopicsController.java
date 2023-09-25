@@ -26,7 +26,7 @@ public class TopicsController {
     }
     @PutMapping("/admin/topics/{id}")
     public ResponseEntity<?> updateTopics(@PathVariable String id,@RequestBody TopicsDto topicsDto){
-        return topicsService.updatedTopics(id, topicsDto);
+        return topicsService.updateTopics(id, topicsDto);
     }
     @DeleteMapping("/admin/topics/{id}")
     public ResponseEntity<?> deleteTopics(@PathVariable String id){
