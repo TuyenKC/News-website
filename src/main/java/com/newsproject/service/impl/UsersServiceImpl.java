@@ -8,6 +8,8 @@ import com.newsproject.repository.entity.Users;
 import com.newsproject.security.CustomUserDetails;
 import com.newsproject.service.RolesService;
 import com.newsproject.service.UsersService;
+import com.newsproject.utils.DtoToEntityMapper;
+import com.newsproject.utils.EntityToDtoMapper;
 import com.newsproject.utils.JwtTokenProvider;
 import com.newsproject.utils.UUIDGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +65,7 @@ public class UsersServiceImpl implements UsersService {
         if(usersRepository.existsByUsername(usersDto.getUsername())){
             return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(new ResponseObject("failed","Error: Username is existed", ""));
         }
-        Users users = dtoToEntity(usersDto);
+        Users users = new DtoToEntityMapper().dtoToEntityUsers(usersDto);
         System.out.println(users);
         usersRepository.save(users);
 
@@ -75,13 +77,13 @@ public class UsersServiceImpl implements UsersService {
         Optional<Users> users = usersRepository.findById(id);
         if(!users.isPresent())
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseObject("failed","Can not find user",""));
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Get Users successfully",entityToDto(users.get())));
+        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Get Users successfully",new EntityToDtoMapper().entityToDtoUsers(users.get())));
     }
 
     @Override
     public ResponseEntity<?> getAllUsers() {
         List<Users> users = usersRepository.findAll();
-        List<UsersDto> usersDtos = users.stream().map( user -> entityToDto(user) ).collect(Collectors.toList());
+        List<UsersDto> usersDtos = users.stream().map( user -> new EntityToDtoMapper().entityToDtoUsers(user) ).collect(Collectors.toList());
         return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Get All Users successfully",usersDtos));
 
     }
@@ -97,9 +99,9 @@ public class UsersServiceImpl implements UsersService {
 
     @Override
     public ResponseEntity<?> updateUser(String id, UsersDto usersDto) {
-        Users users = dtoToEntity(usersDto);
+        Users users = new DtoToEntityMapper().dtoToEntityUsers(usersDto);
         usersRepository.save(users);
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Update User successfully",entityToDto(users)));
+        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Update User successfully",new EntityToDtoMapper().entityToDtoUsers(users)));
     }
 
     public ResponseEntity<?> signUpUser(SignUpDto signUpDto){
@@ -168,45 +170,6 @@ public class UsersServiceImpl implements UsersService {
         }
         return rolesSet;
     }
-    private Date getDateNow(){
-        Date res = new Date();
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        Date now = new Date();
-        String dateNow = sdf.format(now);
-        try{
-            res = sdf.parse(dateNow);
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-        return res;
-    }
-    private Users dtoToEntity(UsersDto usersDto){
-        Users users = new Users();
-        users.setId(usersDto.getUserId() != null ? usersDto.getUserId() : new UUIDGenerator().generateUUID());
-        users.setStatus(usersDto.isStatus());
-        String encodedPassword = passwordEncoder.encode(usersDto.getPassword());
-        users.setUsername(usersDto.getUsername());
-        users.setPassword(encodedPassword);
-        users.setEmail(usersDto.getEmail() != null ? usersDto.getEmail() :  "");
-        users.setPhone(usersDto.getPhone() != null ? usersDto.getPhone() :  "");
-        users.setAddress(usersDto.getAddress() != null ? usersDto.getAddress() :  "");
-        users.setCreatedAt(usersDto.getCreatedAt() != null ? usersDto.getCreatedAt() : getDateNow());
-        users.setModifiedAt(getDateNow());
-        users.setRolesSet(getRolesSetFromString(usersDto.getListRoles()));
-        return users;
-    }
 
-    private UsersDto entityToDto(Users users){
-        UsersDto usersDto = new UsersDto();
-        usersDto.setUserId(users.getId());
-        usersDto.setUsername(users.getUsername());
-        usersDto.setPassword(users.getPassword());
-        usersDto.setEmail(users.getEmail());
-        usersDto.setPhone(users.getPhone());
-        usersDto.setStatus(users.isStatus());
-        usersDto.setCreatedAt(users.getCreatedAt());
-        usersDto.setModifiedAt(users.getModifiedAt());
-        usersDto.setListRoles(users.getRolesSet().stream().map(role -> role.getRoleName().toString()).collect(Collectors.toSet()));
-        return usersDto;
-    }
+
 }
