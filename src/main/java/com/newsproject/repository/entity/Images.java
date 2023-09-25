@@ -15,15 +15,13 @@ public class Images {
     private String id;
     @Column(name = "title")
     private String title;
+    @Column(name = "extension")
+    private String extension;
     @Column(name = "created_at")
     @JsonFormat(pattern = "dd/MM/yyyy")
     private Date createdAt;
     @ManyToOne
     @JoinColumn(name = "created_by", nullable = false)
     private Users users;
-    @ManyToOne
-    @JoinColumn(name = "news_id", nullable = false)
-    private News news;
-
 
 }

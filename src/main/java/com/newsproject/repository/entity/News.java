@@ -32,10 +32,9 @@ public class News {
     private Integer view;
     @Column(name = "status")
     private String status;
-
     @ManyToOne
     @JoinColumn(name = "topics_id")
     private Topics topics;
     @OneToMany(mappedBy = "news")
-    private List<Images> imagesList;
+    private List<Comment> comment;
 }

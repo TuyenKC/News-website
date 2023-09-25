@@ -26,6 +26,8 @@ public class Comment {
     @ManyToOne
     @JoinColumn(name = "created_by", nullable = false)
     private Users users;
-
+    @ManyToOne
+    @JoinColumn(name = "news_id", nullable = false)
+    private News news;
 
 }
