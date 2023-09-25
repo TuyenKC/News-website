@@ -7,12 +7,12 @@ import java.util.List;
 public class JwtResponse {
     private String token;
     private String type = "Bearer";
-    private String userId;
+    private String username;
     private List<String> listRoles;
 
-    public JwtResponse(String token,  String userId, List<String> listRoles) {
+    public JwtResponse(String token,  String username, List<String> listRoles) {
         this.token = token;
-        this.userId = userId;
+        this.username = username;
         this.listRoles = listRoles;
     }
 
