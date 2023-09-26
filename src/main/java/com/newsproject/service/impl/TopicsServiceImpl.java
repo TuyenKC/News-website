@@ -2,6 +2,8 @@ package com.newsproject.service.impl;
 
 import com.newsproject.controller.dto.ResponseObject;
 import com.newsproject.controller.dto.TopicsDto;
+import com.newsproject.exception.TopicsNotExistedException;
+import com.newsproject.exception.TopicsTitleExistedException;
 import com.newsproject.repository.TopicsRepository;
 import com.newsproject.repository.entity.Topics;
 import com.newsproject.service.NewsService;
@@ -30,43 +32,39 @@ public class TopicsServiceImpl implements TopicsService {
     }
 
     @Override
-    public ResponseEntity<?> addTopics(TopicsDto topicsDto) {
+    public TopicsDto addTopics(TopicsDto topicsDto) throws TopicsTitleExistedException {
          Topics topics = new DtoToEntityMapper().dtoToEntityTopics(topicsDto);
+         if(topicsRepository.existByTitle(topics.getTitle())){
+             throw new TopicsTitleExistedException("Topics Title is existed");
+         }
          Topics savedTopics = topicsRepository.save(topics);
-         return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Add Topics successfully",new EntityToDtoMapper().entityToDtoTopics(savedTopics)));
+         return new EntityToDtoMapper().entityToDtoTopics(savedTopics);
     }
 
     @Override
-    public ResponseEntity<?> updateTopics(String id, TopicsDto topicsDto) {
-        Optional<Topics> topics = topicsRepository.findById(id);
-        if(!topics.isPresent())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseObject("failed","Can not find Topics",""));
+    public TopicsDto updateTopics(String id, TopicsDto topicsDto) throws TopicsNotExistedException {
+        Topics topics = topicsRepository.findById(id).orElseThrow( () -> new TopicsNotExistedException("Can not find topícs"));
         Topics updatedTopics = topicsRepository.save(new DtoToEntityMapper().dtoToEntityTopics(topicsDto));
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Update Topics successfully",new EntityToDtoMapper().entityToDtoTopics(updatedTopics)));
+        return new EntityToDtoMapper().entityToDtoTopics(updatedTopics);
     }
 
     @Override
-    public ResponseEntity<?> deleteTopics(String id) {
-        Optional<Topics> topics = topicsRepository.findById(id);
-        if(!topics.isPresent())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseObject("failed","Can not find Topics",""));
+    public void deleteTopics(String id) throws TopicsNotExistedException {
+        Topics topics = topicsRepository.findById(id).orElseThrow( () -> new TopicsNotExistedException("Can not find topícs"));
         topicsRepository.deleteById(id);
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Delete Topics successfully",""));
     }
 
     @Override
-    public ResponseEntity<?> getAllTopics() {
+    public List<TopicsDto> getAllTopics() {
         List<Topics> topicsList = topicsRepository.findAll();
         List<TopicsDto> topicsDtos = topicsList.stream().map( topics -> new EntityToDtoMapper().entityToDtoTopics(topics)).collect(Collectors.toList());
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Get All Topics successfully",topicsDtos));
+        return topicsDtos;
     }
 
     @Override
-    public ResponseEntity<?> getTopicsById(String id) {
-        Optional<Topics> topics = topicsRepository.findById(id);
-        if(!topics.isPresent())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseObject("failed","Can not find Topics",""));
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Get Topics successfully",new EntityToDtoMapper().entityToDtoTopics(topics.get())));    }
-
+    public TopicsDto getTopicsById(String id) throws TopicsNotExistedException  {
+        Topics topics = topicsRepository.findById(id).orElseThrow( () -> new TopicsNotExistedException("Can not find topícs"));
+        return new EntityToDtoMapper().entityToDtoTopics(topics);
+    }
 
 }

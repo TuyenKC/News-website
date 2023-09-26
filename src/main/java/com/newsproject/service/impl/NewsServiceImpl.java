@@ -2,6 +2,9 @@ package com.newsproject.service.impl;
 
 import com.newsproject.controller.dto.NewsDto;
 import com.newsproject.controller.dto.ResponseObject;
+import com.newsproject.exception.NewsExistedException;
+import com.newsproject.exception.NewsNotExistedException;
+import com.newsproject.exception.TopicsNotExistedException;
 import com.newsproject.repository.NewsRepository;
 import com.newsproject.repository.TopicsRepository;
 import com.newsproject.repository.entity.News;
@@ -44,54 +47,49 @@ public class NewsServiceImpl implements NewsService {
     }
 
     @Override
-    public ResponseEntity<?> getAllNews() {
+    public List<NewsDto> getAllNews() {
         List<NewsDto> newsListDtos = newsRepository.findAll().stream().map(
                 news -> new EntityToDtoMapper().entityToDtoNews(news)
         ).collect(Collectors.toList());
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Get All News successfully",newsListDtos));
+        return newsListDtos;
     }
 
     @Override
-    public ResponseEntity<?> getNewsById(String id) {
-        Optional<News> news = newsRepository.findById(id);
-        if(!news.isPresent()){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseObject("failed","Can not find News",""));
-        }
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Get  News successfully",new EntityToDtoMapper().entityToDtoNews(news.get())));
+    public NewsDto getNewsById(String id) throws NewsNotExistedException {
+        News news = newsRepository.findById(id).orElseThrow(
+                () -> new NewsNotExistedException("News is not existed")
+        );
+        return new EntityToDtoMapper().entityToDtoNews(news);
     }
 
     @Override
-    public ResponseEntity<?> addNews(NewsDto newsDto) {
-        Optional<Topics> topics = topicsRepository.findById(newsDto.getTopicsId());
-        News news = new DtoToEntityMapper().dtoToEntityNews(newsDto,topics.get());
+    public NewsDto addNews(NewsDto newsDto) throws TopicsNotExistedException {
+        Topics topics = topicsRepository.findById(newsDto.getTopicsId()).orElseThrow( () -> new TopicsNotExistedException("Can not find topics"));
+        News news = new DtoToEntityMapper().dtoToEntityNews(newsDto,topics);
         News savedNews = newsRepository.save(news);
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Add News successfully", new EntityToDtoMapper().entityToDtoNews(savedNews)));
+        return new EntityToDtoMapper().entityToDtoNews(savedNews);
     }
 
     @Override
-    public ResponseEntity<?> updateNews(String id,NewsDto newsDto) {
-        Optional<News> news = newsRepository.findById(id);
-        if(!news.isPresent()){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseObject("failed","Can not find News",""));
-        }
-        Optional<Topics> topics = topicsRepository.findById(newsDto.getTopicsId());
-        News savedNews = newsRepository.save(new DtoToEntityMapper().dtoToEntityNews(newsDto , topics.get()));
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Update News successfully", new EntityToDtoMapper().entityToDtoNews(savedNews)));
+    public NewsDto updateNews(String id,NewsDto newsDto) throws NewsNotExistedException, TopicsNotExistedException {
+        News news = newsRepository.findById(id).orElseThrow(
+                () -> new NewsNotExistedException("News is not existed")
+        );
+        Topics topics = topicsRepository.findById(newsDto.getTopicsId()).orElseThrow( () -> new TopicsNotExistedException("Can not find topics"));
+        News savedNews = newsRepository.save(new DtoToEntityMapper().dtoToEntityNews(newsDto , topics));
+        return new EntityToDtoMapper().entityToDtoNews(savedNews);
     }
 
     @Override
-    public ResponseEntity<?> deleteNews(String id) {
-        Optional<News> news = newsRepository.findById(id);
-        if(!news.isPresent()){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseObject("failed","Can not find News",""));
-        }
-
+    public void deleteNews(String id) throws NewsNotExistedException {
+        News news = newsRepository.findById(id).orElseThrow(
+                () -> new NewsNotExistedException("News is not existed")
+        );
         newsRepository.deleteById(id);
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Delete News successfully",""));
     }
 
     @Override
-    public ResponseEntity<?> getListMostViewNews() {
+    public List<NewsDto> getListMostViewNews() {
         return null;
     }
 

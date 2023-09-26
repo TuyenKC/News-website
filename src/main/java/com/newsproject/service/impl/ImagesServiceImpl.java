@@ -2,6 +2,7 @@ package com.newsproject.service.impl;
 
 import com.newsproject.controller.dto.ImagesDto;
 import com.newsproject.controller.dto.ResponseObject;
+import com.newsproject.exception.UsersNotExistedException;
 import com.newsproject.repository.ImagesRepository;
 import com.newsproject.repository.UsersRepository;
 import com.newsproject.repository.entity.Images;
@@ -28,15 +29,17 @@ public class ImagesServiceImpl implements ImagesService {
     @Autowired
     private IStorageService storageService;
     @Override
-    public ResponseEntity<?> addImages(ImagesDto imagesDto) {
-        Optional<Users> users = usersRepository.findById(imagesDto.getUserId());
-        Images images = new DtoToEntityMapper().dtoToEntityImages(imagesDto,users.get());
+    public ImagesDto addImages(ImagesDto imagesDto) throws UsersNotExistedException {
+        Users users = usersRepository.findById(imagesDto.getUserId()).orElseThrow(
+                () -> new UsersNotExistedException("Users is not existed")
+        );
+        Images images = new DtoToEntityMapper().dtoToEntityImages(imagesDto,users);
         Images savedImages = imagesRepository.save(images);
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Add Images successfully",new EntityToDtoMapper().entityToDtoImages(savedImages)));
+        return new EntityToDtoMapper().entityToDtoImages(savedImages);
     }
 
     @Override
-    public ResponseEntity<?> getImagesByUsersId(String usersId) {
+    public List<ImagesDto> getImagesByUsersId(String usersId) {
         List<ImagesDto> imagesDtoList = imagesRepository.findAll().stream()
                 .filter(images -> images.getUsers().getId().equals(usersId))
                 .map(images -> new EntityToDtoMapper().entityToDtoImages(images))
@@ -45,6 +48,6 @@ public class ImagesServiceImpl implements ImagesService {
 //            byte[] content = (byte[]) storageService.readFileContent(imagesDto.getTitle()).getBody();
 //            imagesDto.setContent(content);
 //        }
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Get List Images successfully", imagesDtoList));
+        return imagesDtoList;
     }
 }

@@ -1,6 +1,8 @@
 package com.newsproject.service.impl;
 
 import com.newsproject.controller.dto.*;
+import com.newsproject.exception.UsernameValidateException;
+import com.newsproject.exception.UsersNotExistedException;
 import com.newsproject.repository.UsersRepository;
 import com.newsproject.repository.entity.ERole;
 import com.newsproject.repository.entity.Roles;
@@ -61,52 +63,52 @@ public class UsersServiceImpl implements UsersService {
     }
 
     @Override
-    public ResponseEntity<?> addUser(UsersDto usersDto) {
+    public UsersDto addUser(UsersDto usersDto) throws UsernameValidateException {
         if(usersRepository.existsByUsername(usersDto.getUsername())){
-            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(new ResponseObject("failed","Error: Username is existed", ""));
+            throw new UsernameValidateException("Username is existed");
         }
         Users users = new DtoToEntityMapper().dtoToEntityUsers(usersDto);
-        System.out.println(users);
-        usersRepository.save(users);
-
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Add User successfully",""));
+        Users savedUsers = usersRepository.save(users);
+        return new EntityToDtoMapper().entityToDtoUsers(savedUsers);
     }
 
     @Override
-    public ResponseEntity<?> getUsersById(String id) {
-        Optional<Users> users = usersRepository.findById(id);
-        if(!users.isPresent())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseObject("failed","Can not find user",""));
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Get Users successfully",new EntityToDtoMapper().entityToDtoUsers(users.get())));
+    public UsersDto getUsersById(String id) throws UsersNotExistedException {
+        Users users = usersRepository.findById(id).orElseThrow(
+                () -> new UsersNotExistedException("Users is not existed")
+        );
+        return new EntityToDtoMapper().entityToDtoUsers(users);
     }
 
     @Override
-    public ResponseEntity<?> getAllUsers() {
+    public List<UsersDto> getAllUsers() {
         List<Users> users = usersRepository.findAll();
         List<UsersDto> usersDtos = users.stream().map( user -> new EntityToDtoMapper().entityToDtoUsers(user) ).collect(Collectors.toList());
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Get All Users successfully",usersDtos));
+        return usersDtos;
 
     }
 
     @Override
-    public ResponseEntity<?> deleteUsersById(String id) {
-        Optional<Users> users = usersRepository.findById(id);
-        if(!users.isPresent())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseObject("failed","Can not find user",""));
+    public void deleteUsersById(String id) throws UsersNotExistedException {
+        Users users = usersRepository.findById(id).orElseThrow(
+                () -> new UsersNotExistedException("Users is not existed")
+        );
         usersRepository.deleteById(id);
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Delete Users Successfully",""));
     }
 
     @Override
-    public ResponseEntity<?> updateUser(String id, UsersDto usersDto) {
+    public UsersDto updateUser(String id, UsersDto usersDto) throws UsersNotExistedException {
+        Users usersCheck = usersRepository.findById(id).orElseThrow(
+                () -> new UsersNotExistedException("Users is not existed")
+        );
         Users users = new DtoToEntityMapper().dtoToEntityUsers(usersDto);
-        usersRepository.save(users);
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Update User successfully",new EntityToDtoMapper().entityToDtoUsers(users)));
+        Users savedUsers = usersRepository.save(users);
+        return new EntityToDtoMapper().entityToDtoUsers(savedUsers);
     }
 
-    public ResponseEntity<?> signUpUser(SignUpDto signUpDto){
+    public void signUpUser(SignUpDto signUpDto) throws UsernameValidateException {
         if(usersRepository.existsByUsername(signUpDto.getUsername())){
-            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(new ResponseObject("failed","Error: Username is existed", ""));
+            throw new UsernameValidateException("Username is existed");
         }
         Users users = new Users();
         users.setId(new UUIDGenerator().generateUUID());
@@ -127,9 +129,8 @@ public class UsersServiceImpl implements UsersService {
         Set<Roles> rolesSet = getRolesSetFromString(strRoles);
         users.setRolesSet(rolesSet);
         usersRepository.save(users);
-        return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","User registered successfully",""));
     }
-    public ResponseEntity<?> logInUser(LogInDto loginDto){
+    public JwtResponse logInUser(LogInDto loginDto){
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginDto.getUsername(), loginDto.getPassword())
@@ -139,10 +140,11 @@ public class UsersServiceImpl implements UsersService {
             String jwt = jwtTokenProvider.generateToken(customUserDetails);
             List<String> listRoles = customUserDetails.getAuthorities().stream()
                     .map(item -> item.getAuthority()).collect(Collectors.toList());
-            return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success", "Login successfully", new JwtResponse(jwt, customUserDetails.getUsername(), listRoles)));
-        } catch (AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ResponseObject("failed", "Error: Invalid credentials", ""));
+            return new JwtResponse(jwt, customUserDetails.getUsername(), listRoles);
+        }catch (AuthenticationException e){
+            throw e;
         }
+
     }
     private Set<Roles> getRolesSetFromString(Set<String> strRoles) {
         Set<Roles> rolesSet = new HashSet<>();

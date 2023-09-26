@@ -1,8 +1,11 @@
 package com.newsproject.controller;
 
 import com.newsproject.controller.dto.NewsDto;
+import com.newsproject.controller.dto.ResponseObject;
+import com.newsproject.controller.dto.TopicsDto;
 import com.newsproject.service.NewsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,23 +17,48 @@ public class NewsController {
 
     @GetMapping("/admin/news")
     public ResponseEntity<?> getAllNews(){
-        return newsService.getAllNews();
+        try{
+            newsService.getAllNews();
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Get All News successfully",""));
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseObject("failed",e.getMessage(),""));
+        }
     }
     @GetMapping("/news/{id}")
     public ResponseEntity<?> getNewsById(@PathVariable String id){
-        return newsService.getNewsById(id);
+        try{
+            newsService.getNewsById(id);
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Get News successfully",""));
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseObject("failed",e.getMessage(),""));
+        }
     }
     @PostMapping("/admin/news")
     public ResponseEntity<?> addNews(@RequestBody NewsDto newsDto){
-        return newsService.addNews(newsDto);
+        try{
+            newsService.addNews(newsDto);
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Add News successfully",""));
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseObject("failed",e.getMessage(),""));
+        }
     }
     @PutMapping("/admin/news/{id}")
     public ResponseEntity<?> updateNews(@PathVariable String id, @RequestBody NewsDto newsDto){
-        return newsService.updateNews(id, newsDto);
+        try{
+            newsService.updateNews(id, newsDto);
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Update news successfully",""));
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseObject("failed",e.getMessage(),""));
+        }
     }
     @DeleteMapping("/admin/news/{id}")
     public ResponseEntity<?> deleteNews(@PathVariable String id){
-        return newsService.deleteNews(id);
+        try{
+            newsService.deleteNews(id);
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Delete news successfully",""));
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseObject("failed",e.getMessage(),""));
+        }
     }
 
 }

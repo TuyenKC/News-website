@@ -38,11 +38,21 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody SignUpDto signUpDto){
-        return usersService.signUpUser(signUpDto);
+        try{
+            usersService.signUpUser(signUpDto);
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Register successfully",""));
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseObject("failed",e.getMessage(),""));
+        }
     }
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody LogInDto loginDto) {
-        return usersService.logInUser(loginDto);
+        try{
+            usersService.logInUser(loginDto);
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseObject("success","Login successfully",""));
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ResponseObject("failed",e.getMessage(),""));
+        }
     }
 
 }

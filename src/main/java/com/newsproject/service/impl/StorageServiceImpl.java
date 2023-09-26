@@ -3,6 +3,8 @@ package com.newsproject.service.impl;
 import com.newsproject.controller.ImageController;
 import com.newsproject.controller.dto.ImagesDto;
 import com.newsproject.controller.dto.ResponseObject;
+import com.newsproject.exception.ReadFileException;
+import com.newsproject.exception.StoreFileException;
 import com.newsproject.repository.entity.Images;
 import com.newsproject.service.IStorageService;
 import com.newsproject.service.ImagesService;
@@ -45,32 +47,24 @@ public class StorageServiceImpl implements IStorageService {
         return Arrays.asList(new String[]{"png","jpg","jpeg","bmp"}).contains(fileExtensions.trim().toLowerCase());
     }
     @Override
-    public ResponseEntity<?> storeFile(MultipartFile file, String usersId) {
+    public ImagesDto storeFile(MultipartFile file, String usersId) throws StoreFileException {
         try{
             if(file.isEmpty()){
-                return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(
-                        new ResponseObject("failed", "Failed to store empty file", "")
-                );
+                throw new StoreFileException("Failed to store empty file");
             }
             if(!isImageFile(file)){
-                return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(
-                        new ResponseObject("failed", "You can only upload image file", "")
-                );
+                throw new StoreFileException("You can only upload image file");
             }
             float fileSizeMegaBytes = file.getSize()/1_000_000.0f;
             if(fileSizeMegaBytes > 5.0f){
-                return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(
-                        new ResponseObject("failed", "File must be less than 5MB", "")
-                );
+                throw new StoreFileException("File must be less than 5MB");
             }
             String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
             String generatedFileName = new UUIDGenerator().generateUUID();
             generatedFileName = generatedFileName + "." + fileExtension;
             Path destinationFilePath = this.storageFolder.resolve(Paths.get(generatedFileName)).normalize().toAbsolutePath();
             if(!destinationFilePath.getParent().equals(this.storageFolder.toAbsolutePath())){
-                return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(
-                        new ResponseObject("failed", "Empty store file outside current directory", "")
-                );
+                throw new StoreFileException("Empty store file outside current directory");
             }
             try(InputStream inputStream = file.getInputStream()){
                 Files.copy(inputStream,destinationFilePath, StandardCopyOption.REPLACE_EXISTING);
@@ -79,18 +73,14 @@ public class StorageServiceImpl implements IStorageService {
             imagesDto.setTitle(generatedFileName);
             imagesDto.setExtension(fileExtension);
             imagesDto.setUserId(usersId);
-            return ResponseEntity.status(HttpStatus.OK).body(
-                    new ResponseObject("ok", "upload file successfully", imagesDto)
-            );
+            return imagesDto;
         }catch (IOException e){
-            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(
-                    new ResponseObject("failed", "Cannot store file", "")
-            );
+            throw new StoreFileException("Cannot store file");
         }
     }
 
     @Override
-    public ResponseEntity<?> loadAll() {
+    public List<String> loadAll() throws ReadFileException {
         try{
             Stream<Path> stream = Files.walk(this.storageFolder,1)
                     .filter(path -> !path.equals(this.storageFolder) && !path.toString().contains("._"))
@@ -100,31 +90,26 @@ public class StorageServiceImpl implements IStorageService {
                         "readFile", path.getFileName().toString()).build().toUri().toString();
                 return urlPath;
             }).collect(Collectors.toList());
-            return ResponseEntity.ok(new ResponseObject("ok","List file successfully",urls));
+            return urls;
         }catch (IOException e){
-            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(
-                    new ResponseObject("failed", "List file failed", "")
-            );        }
+            throw new ReadFileException("List file failed");
+        }
     }
 
     @Override
-    public ResponseEntity<?> readFileContent(String fileName) {
+    public byte[] readFileContent(String fileName) throws ReadFileException {
         try{
             Path file = storageFolder.resolve(fileName);
             Resource resource = new UrlResource(file.toUri());
             if(resource.exists() || resource.isReadable()){
                 byte[] bytes = StreamUtils.copyToByteArray(resource.getInputStream());
-                return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.IMAGE_JPEG).body(bytes);
+                return bytes;
             }else{
-                return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(
-                        new ResponseObject("failed", "Could not read file" + fileName, "")
-                );
+               throw new ReadFileException("Can not read file");
             }
 
         }catch (IOException e){
-            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(
-                    new ResponseObject("failed", "Could not read file" + fileName, "")
-            );
+                throw new ReadFileException("Can not read File");
         }
     }
 }
